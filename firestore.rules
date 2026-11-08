@@ -1,0 +1,503 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    // 1. Business Validation
+    function isValidBusiness(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'name', 'businessType', 'branchName', 'city', 'phone', 'address',
+               'currency', 'timezone', 'language', 'taxRatePercent', 'receiptHeader', 'receiptFooter',
+               'subscriptionPlan', 'subscriptionBillingCycle', 'subscriptionStatus', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'name', 'businessType', 'branchName', 'city', 'phone', 'address',
+               'currency', 'timezone', 'language', 'taxRatePercent', 'receiptHeader', 'receiptFooter',
+               'subscriptionPlan', 'subscriptionBillingCycle', 'subscriptionStatus', 'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.businessType is string && data.businessType.size() <= 30 && (data.businessType in ['PHARMACY', 'GENERAL_STORE']) &&
+             data.branchName is string && data.branchName.size() >= 1 && data.branchName.size() <= 100 &&
+             data.city is string && data.city.size() >= 1 && data.city.size() <= 60 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.address is string && data.address.size() <= 200 &&
+             data.currency is string && data.currency.size() <= 10 &&
+             data.timezone is string && data.timezone.size() <= 40 &&
+             data.language is string && data.language.size() <= 10 && (data.language in ['EN', 'UR']) &&
+             data.taxRatePercent is number && data.taxRatePercent >= 0 && data.taxRatePercent <= 100 &&
+             data.receiptHeader is string && data.receiptHeader.size() <= 200 &&
+             data.receiptFooter is string && data.receiptFooter.size() <= 200 &&
+             data.subscriptionPlan is string && data.subscriptionPlan.size() <= 30 && (data.subscriptionPlan in ['STARTER', 'PROFESSIONAL', 'BUSINESS']) &&
+             data.subscriptionBillingCycle is string && data.subscriptionBillingCycle.size() <= 20 && (data.subscriptionBillingCycle in ['MONTHLY', 'ANNUAL']) &&
+             data.subscriptionStatus is string && data.subscriptionStatus.size() <= 30 && (data.subscriptionStatus in ['TRIAL', 'ACTIVE', 'GRACE_PERIOD']) &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 2. Product Validation
+    function isValidProduct(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'name', 'sku', 'barcode', 'category', 'brand', 'description',
+               'purchasePrice', 'sellingPrice', 'wholesalePrice', 'unit', 'purchaseUnit', 'conversionFactor',
+               'currentStock', 'openingStock', 'reorderLevel', 'taxPercent', 'isActive', 'isLooseWeight',
+               'genericName', 'saltFormula', 'manufacturer', 'strength', 'dosageForm', 'drapRegNumber',
+               'requiresPrescription', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'name', 'sku', 'barcode', 'category', 'brand', 'description',
+               'purchasePrice', 'sellingPrice', 'wholesalePrice', 'unit', 'purchaseUnit', 'conversionFactor',
+               'currentStock', 'openingStock', 'reorderLevel', 'taxPercent', 'isActive', 'isLooseWeight',
+               'genericName', 'saltFormula', 'manufacturer', 'strength', 'dosageForm', 'drapRegNumber',
+               'requiresPrescription', 'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 60 &&
+             data.barcode is string && data.barcode.size() <= 60 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.brand is string && data.brand.size() <= 80 &&
+             data.description is string && data.description.size() <= 300 &&
+             data.purchasePrice is number && data.purchasePrice >= 0 &&
+             data.sellingPrice is number && data.sellingPrice >= 0 &&
+             data.wholesalePrice is number && data.wholesalePrice >= 0 &&
+             data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 30 &&
+             data.purchaseUnit is string && data.purchaseUnit.size() <= 30 &&
+             data.conversionFactor is number && data.conversionFactor >= 1 &&
+             data.currentStock is number &&
+             data.openingStock is number &&
+             data.reorderLevel is number && data.reorderLevel >= 0 &&
+             data.taxPercent is number && data.taxPercent >= 0 && data.taxPercent <= 100 &&
+             data.isActive is bool &&
+             data.isLooseWeight is bool &&
+             data.genericName is string && data.genericName.size() <= 120 &&
+             data.saltFormula is string && data.saltFormula.size() <= 150 &&
+             data.manufacturer is string && data.manufacturer.size() <= 100 &&
+             data.strength is string && data.strength.size() <= 50 &&
+             data.dosageForm is string && data.dosageForm.size() <= 50 &&
+             data.drapRegNumber is string && data.drapRegNumber.size() <= 60 &&
+             data.requiresPrescription is bool &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 3. MedicineBatch Validation
+    function isValidMedicineBatch(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'productId', 'productName', 'batchNumber', 'manufacturingDate',
+               'expiryDate', 'purchaseCost', 'sellingPrice', 'availableQty', 'supplierId', 'supplierName',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'productId', 'productName', 'batchNumber', 'manufacturingDate',
+               'expiryDate', 'purchaseCost', 'sellingPrice', 'availableQty', 'supplierId', 'supplierName',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             isValidId(data.productId) &&
+             data.productName is string && data.productName.size() >= 1 && data.productName.size() <= 120 &&
+             data.batchNumber is string && data.batchNumber.size() >= 1 && data.batchNumber.size() <= 60 &&
+             data.manufacturingDate is string && data.manufacturingDate.size() <= 30 &&
+             data.expiryDate is string && data.expiryDate.size() >= 1 && data.expiryDate.size() <= 30 &&
+             data.purchaseCost is number && data.purchaseCost >= 0 &&
+             data.sellingPrice is number && data.sellingPrice >= 0 &&
+             data.availableQty is number && data.availableQty >= 0 &&
+             data.supplierId is string && data.supplierId.size() <= 128 &&
+             data.supplierName is string && data.supplierName.size() <= 100 &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 4. Sale Validation
+    function isValidSale(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'invoiceNumber', 'customerId', 'customerName', 'itemsSummary',
+               'itemCount', 'subtotal', 'discountAmount', 'taxAmount', 'grandTotal', 'totalCostSnapshot',
+               'grossProfit', 'paidAmount', 'creditAmount', 'paymentMethod', 'prescriptionRef',
+               'expiryOverrideReason', 'status', 'syncStatus', 'idempotencyKey', 'cashierName',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'invoiceNumber', 'customerId', 'customerName', 'itemsSummary',
+               'itemCount', 'subtotal', 'discountAmount', 'taxAmount', 'grandTotal', 'totalCostSnapshot',
+               'grossProfit', 'paidAmount', 'creditAmount', 'paymentMethod', 'prescriptionRef',
+               'expiryOverrideReason', 'status', 'syncStatus', 'idempotencyKey', 'cashierName',
+               'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.invoiceNumber is string && data.invoiceNumber.size() >= 1 && data.invoiceNumber.size() <= 60 &&
+             data.customerId is string && data.customerId.size() <= 128 &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 100 &&
+             data.itemsSummary is string && data.itemsSummary.size() >= 1 && data.itemsSummary.size() <= 1000 &&
+             data.itemCount is number && data.itemCount >= 1 &&
+             data.subtotal is number && data.subtotal >= 0 &&
+             data.discountAmount is number && data.discountAmount >= 0 &&
+             data.taxAmount is number && data.taxAmount >= 0 &&
+             data.grandTotal is number && data.grandTotal >= 0 &&
+             data.totalCostSnapshot is number && data.totalCostSnapshot >= 0 &&
+             data.grossProfit is number &&
+             data.paidAmount is number && data.paidAmount >= 0 &&
+             data.creditAmount is number && data.creditAmount >= 0 &&
+             data.paymentMethod is string && data.paymentMethod.size() >= 1 && data.paymentMethod.size() <= 30 &&
+             data.prescriptionRef is string && data.prescriptionRef.size() <= 100 &&
+             data.expiryOverrideReason is string && data.expiryOverrideReason.size() <= 200 &&
+             data.status is string && data.status.size() <= 30 && (data.status in ['COMPLETED', 'RETURNED', 'PARTIAL_RETURN']) &&
+             data.syncStatus is string && data.syncStatus.size() <= 30 && (data.syncStatus in ['SYNCED', 'PENDING_SYNC']) &&
+             data.idempotencyKey is string && data.idempotencyKey.size() >= 1 && data.idempotencyKey.size() <= 128 &&
+             data.cashierName is string && data.cashierName.size() >= 1 && data.cashierName.size() <= 80 &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 5. Purchase Validation
+    function isValidPurchase(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'invoiceNumber', 'supplierId', 'supplierName', 'itemsSummary',
+               'subtotal', 'discountAmount', 'grandTotal', 'paidAmount', 'payableAmount', 'paymentMethod',
+               'batchNumber', 'expiryDate', 'status', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'invoiceNumber', 'supplierId', 'supplierName', 'itemsSummary',
+               'subtotal', 'discountAmount', 'grandTotal', 'paidAmount', 'payableAmount', 'paymentMethod',
+               'batchNumber', 'expiryDate', 'status', 'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.invoiceNumber is string && data.invoiceNumber.size() >= 1 && data.invoiceNumber.size() <= 60 &&
+             data.supplierId is string && data.supplierId.size() <= 128 &&
+             data.supplierName is string && data.supplierName.size() >= 1 && data.supplierName.size() <= 100 &&
+             data.itemsSummary is string && data.itemsSummary.size() >= 1 && data.itemsSummary.size() <= 1000 &&
+             data.subtotal is number && data.subtotal >= 0 &&
+             data.discountAmount is number && data.discountAmount >= 0 &&
+             data.grandTotal is number && data.grandTotal >= 0 &&
+             data.paidAmount is number && data.paidAmount >= 0 &&
+             data.payableAmount is number && data.payableAmount >= 0 &&
+             data.paymentMethod is string && data.paymentMethod.size() >= 1 && data.paymentMethod.size() <= 30 &&
+             data.batchNumber is string && data.batchNumber.size() <= 60 &&
+             data.expiryDate is string && data.expiryDate.size() <= 30 &&
+             data.status is string && data.status.size() <= 30 && (data.status in ['RECEIVED', 'RETURNED']) &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 6. StockMovement Validation (Append-Only)
+    function isValidStockMovement(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'productId', 'productName', 'batchNumber', 'quantityChange',
+               'stockAfter', 'movementType', 'reason', 'referenceId', 'performedBy', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'productId', 'productName', 'batchNumber', 'quantityChange',
+               'stockAfter', 'movementType', 'reason', 'referenceId', 'performedBy', 'createdAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             isValidId(data.productId) &&
+             data.productName is string && data.productName.size() >= 1 && data.productName.size() <= 120 &&
+             data.batchNumber is string && data.batchNumber.size() <= 60 &&
+             data.quantityChange is number &&
+             data.stockAfter is number &&
+             data.movementType is string && data.movementType.size() >= 1 && data.movementType.size() <= 30 &&
+             data.reason is string && data.reason.size() >= 1 && data.reason.size() <= 200 &&
+             data.referenceId is string && data.referenceId.size() <= 128 &&
+             data.performedBy is string && data.performedBy.size() >= 1 && data.performedBy.size() <= 80 &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    // 7. Customer Validation
+    function isValidCustomer(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'name', 'phone', 'address', 'outstandingBalance',
+               'totalPurchases', 'notes', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'name', 'phone', 'address', 'outstandingBalance',
+               'totalPurchases', 'notes', 'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.address is string && data.address.size() <= 200 &&
+             data.outstandingBalance is number &&
+             data.totalPurchases is number && data.totalPurchases >= 0 &&
+             data.notes is string && data.notes.size() <= 200 &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 8. Supplier Validation
+    function isValidSupplier(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'name', 'companyName', 'phone', 'address',
+               'payableBalance', 'totalPurchased', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'name', 'companyName', 'phone', 'address',
+               'payableBalance', 'totalPurchased', 'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.companyName is string && data.companyName.size() <= 100 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.address is string && data.address.size() <= 200 &&
+             data.payableBalance is number &&
+             data.totalPurchased is number && data.totalPurchased >= 0 &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 9. Expense Validation
+    function isValidExpense(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'category', 'title', 'amount', 'paymentMethod',
+               'status', 'notes', 'recordedBy', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'category', 'title', 'amount', 'paymentMethod',
+               'status', 'notes', 'recordedBy', 'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.amount is number && data.amount >= 0 &&
+             data.paymentMethod is string && data.paymentMethod.size() >= 1 && data.paymentMethod.size() <= 30 &&
+             data.status is string && data.status.size() <= 30 && (data.status in ['DRAFT', 'POSTED', 'ADJUSTED']) &&
+             data.notes is string && data.notes.size() <= 200 &&
+             data.recordedBy is string && data.recordedBy.size() >= 1 && data.recordedBy.size() <= 80 &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 10. Employee Validation
+    function isValidEmployee(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'name', 'phone', 'email', 'role',
+               'permissionsCsv', 'isActive', 'createdAt', 'updatedAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'name', 'phone', 'email', 'role',
+               'permissionsCsv', 'isActive', 'createdAt', 'updatedAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.role is string && data.role.size() >= 1 && data.role.size() <= 40 &&
+             data.permissionsCsv is string && data.permissionsCsv.size() <= 300 &&
+             data.isActive is bool &&
+             data.createdAt is timestamp &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    // 11. AuditLog Validation (Append-Only)
+    function isValidAuditLog(data) {
+      return data.keys().hasAll([
+               'ownerUid', 'businessId', 'action', 'module', 'details', 'performedBy', 'createdAt'
+             ]) &&
+             data.keys().hasOnly([
+               'ownerUid', 'businessId', 'action', 'module', 'details', 'performedBy', 'createdAt'
+             ]) &&
+             data.ownerUid is string && data.ownerUid.size() <= 128 && data.ownerUid == request.auth.uid &&
+             isValidId(data.businessId) &&
+             data.action is string && data.action.size() >= 1 && data.action.size() <= 100 &&
+             data.module is string && data.module.size() >= 1 && data.module.size() <= 60 &&
+             data.details is string && data.details.size() >= 1 && data.details.size() <= 400 &&
+             data.performedBy is string && data.performedBy.size() >= 1 && data.performedBy.size() <= 80 &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    // --- COLLECTION MATCH BLOCKS ---
+
+    match /businesses/{businessId} {
+      allow get: if isSignedIn() && isValidId(businessId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(businessId) && isValidBusiness(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(businessId) && isValidBusiness(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'businessType', 'branchName', 'city', 'phone', 'address',
+                         'currency', 'timezone', 'language', 'taxRatePercent', 'receiptHeader', 'receiptFooter',
+                         'subscriptionPlan', 'subscriptionBillingCycle', 'subscriptionStatus', 'updatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(businessId) && existing().ownerUid == request.auth.uid;
+    }
+
+    match /products/{productId} {
+      allow get: if isSignedIn() && isValidId(productId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(productId) && isValidProduct(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(productId) && isValidProduct(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'sku', 'barcode', 'category', 'brand', 'description',
+                         'purchasePrice', 'sellingPrice', 'wholesalePrice', 'unit', 'purchaseUnit', 'conversionFactor',
+                         'currentStock', 'openingStock', 'reorderLevel', 'taxPercent', 'isActive', 'isLooseWeight',
+                         'genericName', 'saltFormula', 'manufacturer', 'strength', 'dosageForm', 'drapRegNumber',
+                         'requiresPrescription', 'updatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(productId) && existing().ownerUid == request.auth.uid;
+    }
+
+    match /medicine_batches/{batchId} {
+      allow get: if isSignedIn() && isValidId(batchId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(batchId) && isValidMedicineBatch(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(batchId) && isValidMedicineBatch(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().productId == existing().productId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'productName', 'batchNumber', 'manufacturingDate', 'expiryDate',
+                         'purchaseCost', 'sellingPrice', 'availableQty', 'supplierId', 'supplierName', 'updatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(batchId) && existing().ownerUid == request.auth.uid;
+    }
+
+    match /sales/{saleId} {
+      allow get: if isSignedIn() && isValidId(saleId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(saleId) && isValidSale(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(saleId) && isValidSale(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().invoiceNumber == existing().invoiceNumber &&
+                       incoming().createdAt == existing().createdAt &&
+                       existing().status != 'RETURNED' &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'status', 'syncStatus', 'paidAmount', 'creditAmount', 'updatedAt'
+                       ]);
+      allow delete: if false; // Never allow unauthorized invoice deletion
+    }
+
+    match /purchases/{purchaseId} {
+      allow get: if isSignedIn() && isValidId(purchaseId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(purchaseId) && isValidPurchase(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(purchaseId) && isValidPurchase(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().invoiceNumber == existing().invoiceNumber &&
+                       incoming().createdAt == existing().createdAt &&
+                       existing().status != 'RETURNED' &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'paidAmount', 'payableAmount', 'status', 'updatedAt'
+                       ]);
+      allow delete: if false;
+    }
+
+    match /stock_movements/{movementId} {
+      allow get: if isSignedIn() && isValidId(movementId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(movementId) && isValidStockMovement(incoming());
+      allow update, delete: if false; // Append-only ledger
+    }
+
+    match /customers/{customerId} {
+      allow get: if isSignedIn() && isValidId(customerId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(customerId) && isValidCustomer(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(customerId) && isValidCustomer(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'phone', 'address', 'outstandingBalance', 'totalPurchases', 'notes', 'updatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(customerId) && existing().ownerUid == request.auth.uid;
+    }
+
+    match /suppliers/{supplierId} {
+      allow get: if isSignedIn() && isValidId(supplierId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(supplierId) && isValidSupplier(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(supplierId) && isValidSupplier(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'companyName', 'phone', 'address', 'payableBalance', 'totalPurchased', 'updatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(supplierId) && existing().ownerUid == request.auth.uid;
+    }
+
+    match /expenses/{expenseId} {
+      allow get: if isSignedIn() && isValidId(expenseId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(expenseId) && isValidExpense(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(expenseId) && isValidExpense(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'category', 'title', 'amount', 'paymentMethod', 'status', 'notes', 'updatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(expenseId) && existing().ownerUid == request.auth.uid && existing().status == 'DRAFT';
+    }
+
+    match /employees/{employeeId} {
+      allow get: if isSignedIn() && isValidId(employeeId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(employeeId) && isValidEmployee(incoming()) && isValidTimestamp(incoming().createdAt);
+      allow update: if isSignedIn() && isValidId(employeeId) && isValidEmployee(incoming()) &&
+                       existing().ownerUid == request.auth.uid &&
+                       incoming().ownerUid == existing().ownerUid &&
+                       incoming().businessId == existing().businessId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'name', 'phone', 'email', 'role', 'permissionsCsv', 'isActive', 'updatedAt'
+                       ]);
+      allow delete: if isSignedIn() && isValidId(employeeId) && existing().ownerUid == request.auth.uid;
+    }
+
+    match /audit_logs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && existing().ownerUid == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(logId) && isValidAuditLog(incoming());
+      allow update, delete: if false; // Append-only audit log
+    }
+  }
+}

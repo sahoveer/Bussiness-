@@ -1,0 +1,341 @@
+{
+  "entities": {
+    "Business": {
+      "title": "Business",
+      "description": "Represents a Pakistani business tenant (Pharmacy or General Store) with isolated records.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "description": "Authenticated owner UID" },
+        "name": { "type": "string", "description": "Business name" },
+        "businessType": { "type": "string", "enum": ["PHARMACY", "GENERAL_STORE"], "description": "Specialized business mode" },
+        "branchName": { "type": "string", "description": "Branch name" },
+        "city": { "type": "string", "description": "City in Pakistan" },
+        "phone": { "type": "string", "description": "Business phone number" },
+        "address": { "type": "string", "description": "Shop address" },
+        "currency": { "type": "string", "description": "Currency code (PKR)" },
+        "timezone": { "type": "string", "description": "Timezone (Asia/Karachi)" },
+        "language": { "type": "string", "enum": ["EN", "UR"], "description": "Interface language" },
+        "taxRatePercent": { "type": "number", "description": "Default tax percentage" },
+        "receiptHeader": { "type": "string", "description": "Custom receipt header" },
+        "receiptFooter": { "type": "string", "description": "Custom receipt footer" },
+        "subscriptionPlan": { "type": "string", "enum": ["STARTER", "PROFESSIONAL", "BUSINESS"], "description": "SaaS subscription tier" },
+        "subscriptionBillingCycle": { "type": "string", "enum": ["MONTHLY", "ANNUAL"], "description": "Billing cycle" },
+        "subscriptionStatus": { "type": "string", "enum": ["TRIAL", "ACTIVE", "GRACE_PERIOD"], "description": "Subscription status" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp" }
+      },
+      "required": [
+        "ownerUid", "name", "businessType", "branchName", "city", "phone", "address",
+        "currency", "timezone", "language", "taxRatePercent", "receiptHeader", "receiptFooter",
+        "subscriptionPlan", "subscriptionBillingCycle", "subscriptionStatus", "createdAt", "updatedAt"
+      ]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Product or medicine item belonging to a specific business.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "name": { "type": "string" },
+        "sku": { "type": "string" },
+        "barcode": { "type": "string" },
+        "category": { "type": "string" },
+        "brand": { "type": "string" },
+        "description": { "type": "string" },
+        "purchasePrice": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "wholesalePrice": { "type": "number" },
+        "unit": { "type": "string" },
+        "purchaseUnit": { "type": "string" },
+        "conversionFactor": { "type": "number" },
+        "currentStock": { "type": "number" },
+        "openingStock": { "type": "number" },
+        "reorderLevel": { "type": "number" },
+        "taxPercent": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "isLooseWeight": { "type": "boolean" },
+        "genericName": { "type": "string" },
+        "saltFormula": { "type": "string" },
+        "manufacturer": { "type": "string" },
+        "strength": { "type": "string" },
+        "dosageForm": { "type": "string" },
+        "drapRegNumber": { "type": "string" },
+        "requiresPrescription": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "name", "sku", "barcode", "category", "brand", "description",
+        "purchasePrice", "sellingPrice", "wholesalePrice", "unit", "purchaseUnit", "conversionFactor",
+        "currentStock", "openingStock", "reorderLevel", "taxPercent", "isActive", "isLooseWeight",
+        "genericName", "saltFormula", "manufacturer", "strength", "dosageForm", "drapRegNumber",
+        "requiresPrescription", "createdAt", "updatedAt"
+      ]
+    },
+    "MedicineBatch": {
+      "title": "MedicineBatch",
+      "description": "Batch-wise pharmacy inventory record with expiry date and supplier tracking.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "manufacturingDate": { "type": "string" },
+        "expiryDate": { "type": "string" },
+        "purchaseCost": { "type": "number" },
+        "sellingPrice": { "type": "number" },
+        "availableQty": { "type": "number" },
+        "supplierId": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "productId", "productName", "batchNumber", "manufacturingDate",
+        "expiryDate", "purchaseCost", "sellingPrice", "availableQty", "supplierId", "supplierName",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "POS sale invoice with historical cost snapshots and payment method records.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "itemsSummary": { "type": "string" },
+        "itemCount": { "type": "number" },
+        "subtotal": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "taxAmount": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "totalCostSnapshot": { "type": "number" },
+        "grossProfit": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "creditAmount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "prescriptionRef": { "type": "string" },
+        "expiryOverrideReason": { "type": "string" },
+        "status": { "type": "string", "enum": ["COMPLETED", "RETURNED", "PARTIAL_RETURN"] },
+        "syncStatus": { "type": "string", "enum": ["SYNCED", "PENDING_SYNC"] },
+        "idempotencyKey": { "type": "string" },
+        "cashierName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "invoiceNumber", "customerId", "customerName", "itemsSummary",
+        "itemCount", "subtotal", "discountAmount", "taxAmount", "grandTotal", "totalCostSnapshot",
+        "grossProfit", "paidAmount", "creditAmount", "paymentMethod", "prescriptionRef",
+        "expiryOverrideReason", "status", "syncStatus", "idempotencyKey", "cashierName",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "Purchase": {
+      "title": "Purchase",
+      "description": "Supplier purchase invoice.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "itemsSummary": { "type": "string" },
+        "subtotal": { "type": "number" },
+        "discountAmount": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paidAmount": { "type": "number" },
+        "payableAmount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "expiryDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["RECEIVED", "RETURNED"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "invoiceNumber", "supplierId", "supplierName", "itemsSummary",
+        "subtotal", "discountAmount", "grandTotal", "paidAmount", "payableAmount", "paymentMethod",
+        "batchNumber", "expiryDate", "status", "createdAt", "updatedAt"
+      ]
+    },
+    "StockMovement": {
+      "title": "StockMovement",
+      "description": "Append-only stock movement ledger entry.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "batchNumber": { "type": "string" },
+        "quantityChange": { "type": "number" },
+        "stockAfter": { "type": "number" },
+        "movementType": { "type": "string" },
+        "reason": { "type": "string" },
+        "referenceId": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "productId", "productName", "batchNumber", "quantityChange",
+        "stockAfter", "movementType", "reason", "referenceId", "performedBy", "createdAt"
+      ]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer profile and Udhaar (credit) ledger summary.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "outstandingBalance": { "type": "number" },
+        "totalPurchases": { "type": "number" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "name", "phone", "address", "outstandingBalance",
+        "totalPurchases", "notes", "createdAt", "updatedAt"
+      ]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Supplier profile and payable balance summary.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "name": { "type": "string" },
+        "companyName": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "payableBalance": { "type": "number" },
+        "totalPurchased": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "name", "companyName", "phone", "address",
+        "payableBalance", "totalPurchased", "createdAt", "updatedAt"
+      ]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Operating expense record.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "category": { "type": "string" },
+        "title": { "type": "string" },
+        "amount": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "status": { "type": "string", "enum": ["DRAFT", "POSTED", "ADJUSTED"] },
+        "notes": { "type": "string" },
+        "recordedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "category", "title", "amount", "paymentMethod",
+        "status", "notes", "recordedBy", "createdAt", "updatedAt"
+      ]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Shop employee with role-based permissions.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "permissionsCsv": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "name", "phone", "email", "role",
+        "permissionsCsv", "isActive", "createdAt", "updatedAt"
+      ]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Append-only security and financial audit log.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string" },
+        "businessId": { "type": "string" },
+        "action": { "type": "string" },
+        "module": { "type": "string" },
+        "details": { "type": "string" },
+        "performedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid", "businessId", "action", "module", "details", "performedBy", "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/businesses/{businessId}": {
+      "schema": "Business",
+      "description": "Multi-tenant business profiles owned by authenticated users."
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Products and medicines scoped to businessId and ownerUid."
+    },
+    "/medicine_batches/{batchId}": {
+      "schema": "MedicineBatch",
+      "description": "Pharmacy batch inventory records."
+    },
+    "/sales/{saleId}": {
+      "schema": "Sale",
+      "description": "POS invoices and sales transactions."
+    },
+    "/purchases/{purchaseId}": {
+      "schema": "Purchase",
+      "description": "Supplier purchase invoices."
+    },
+    "/stock_movements/{movementId}": {
+      "schema": "StockMovement",
+      "description": "Append-only stock movement ledger."
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customers and Udhaar balances."
+    },
+    "/suppliers/{supplierId}": {
+      "schema": "Supplier",
+      "description": "Suppliers and payable balances."
+    },
+    "/expenses/{expenseId}": {
+      "schema": "Expense",
+      "description": "Business operating expenses."
+    },
+    "/employees/{employeeId}": {
+      "schema": "Employee",
+      "description": "Employees and role-based access definitions."
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Append-only audit trail."
+    }
+  }
+}

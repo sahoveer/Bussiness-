@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">DukaanOS</string>
+    <string name="tagline">One Platform. Every Shop. Complete Control.</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="pharmacy_mode">Pharmacy / Medical Store</string>
+    <string name="general_store_mode">General Store / Grocery</string>
+    <string name="complete_sale">Complete Sale &amp; Print Receipt</string>
+    <string name="search_products_hint">Search by name, SKU, generic salt, or scan barcode…</string>
+</resources>
